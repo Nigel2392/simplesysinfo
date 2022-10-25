@@ -117,7 +117,7 @@ func GetSysInfo(include []int) *SysInfo {
 		info.CPU = CPUInfo{
 			Threads:      cpuStat[0].Cores,
 			ClockSpeed:   cpuStat[0].Mhz,
-			CurrentUsage: GetCPUUsage(),
+			CurrentUsage: GetCPUUsage(50),
 			Name:         strings.TrimSpace(cpuStat[0].ModelName),
 		}
 	}
@@ -227,8 +227,8 @@ func GetProcs() (map[int]*ProcessInfo, error) {
 	}
 	return procs, nil
 }
-func GetCPUUsage() int {
-	percent, err := cpu.Percent(time.Millisecond*50, false)
+func GetCPUUsage(ms int) int {
+	percent, err := cpu.Percent(time.Millisecond*time.Duration(ms), false) // 50ms is the default
 	if err != nil {
 		return 0
 	}
