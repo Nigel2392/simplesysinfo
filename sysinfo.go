@@ -83,7 +83,7 @@ func (r *RAMInfo) GetUsedPercentage() float64 {
 }
 
 func (r *RAMInfo) String() string {
-	return "Total: " + ByteToGB(r.Total) + "Used: " + strconv.FormatFloat(r.GetUsedPercentage(), 'f', 2, 64) + "%"
+	return "<Memory> Total: " + ByteToGB(r.Total) + " Used: " + strconv.FormatFloat(r.GetUsedPercentage(), 'f', 2, 64) + "%"
 }
 
 // DiskInfo saves the Disk information
@@ -100,7 +100,7 @@ func (d *DiskInfo) GetUsedPercentage() float64 {
 }
 
 func (d *DiskInfo) String() string {
-	return "Total: " + ByteToGB(d.Total) + "Used: " + strconv.FormatFloat(d.GetUsedPercentage(), 'f', 2, 64) + "%"
+	return "<Disk> Total: " + ByteToGB(d.Total) + " Used: " + strconv.FormatFloat(d.GetUsedPercentage(), 'f', 2, 64) + "%"
 }
 
 func GetSysInfo(include []int) *SysInfo {
