@@ -2,8 +2,10 @@ package simplesysinfo
 
 import (
 	"encoding/json"
+	"math"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -44,7 +46,7 @@ type ProcessInfo struct {
 type CPUInfo struct {
 	Threads      int32   `json:"threads,omitempty"`
 	ClockSpeed   float64 `json:"clockspeed,omitempty"`
-	CurrentUsage float32 `json:"currentusage,omitempty"`
+	CurrentUsage int     `json:"currentusage,omitempty"`
 	Name         string  `json:"name,omitempty"`
 }
 
@@ -65,23 +67,6 @@ type DiskInfo struct {
 	Free  uint64 `json:"free,omitempty"`
 }
 
-func GetProcs() (map[int]*ProcessInfo, error) {
-	procs := make(map[int]*ProcessInfo)
-	os_procs, err := process.Processes()
-	if err != nil {
-		return nil, err
-	}
-	for _, p := range os_procs {
-		proc := &ProcessInfo{}
-		proc.Pid = p.Pid
-		proc.Name, _ = p.Name()
-		proc.Executable, _ = p.Exe()
-		proc.Username, _ = p.Username()
-		procs[int(p.Pid)] = proc
-	}
-	return procs, nil
-}
-
 func GetSysInfo(include []int) *SysInfo {
 	hostStat, _ := host.Info()
 	info := new(SysInfo)
@@ -94,9 +79,10 @@ func GetSysInfo(include []int) *SysInfo {
 	if ContainsInt(include, INC_CPU) {
 		cpuStat, _ := cpu.Info()
 		info.CPU = CPUInfo{
-			Threads:    cpuStat[0].Cores,
-			ClockSpeed: cpuStat[0].Mhz,
-			Name:       strings.TrimSpace(cpuStat[0].ModelName),
+			Threads:      cpuStat[0].Cores,
+			ClockSpeed:   cpuStat[0].Mhz,
+			CurrentUsage: GetCPUUsage(),
+			Name:         strings.TrimSpace(cpuStat[0].ModelName),
 		}
 	}
 	if ContainsInt(include, INC_MEM) {
@@ -184,6 +170,29 @@ func ContainsInt(slice []int, item int) bool {
 		}
 	}
 	return false
+}
+func GetProcs() (map[int]*ProcessInfo, error) {
+	procs := make(map[int]*ProcessInfo)
+	os_procs, err := process.Processes()
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range os_procs {
+		proc := &ProcessInfo{}
+		proc.Pid = p.Pid
+		proc.Name, _ = p.Name()
+		proc.Executable, _ = p.Exe()
+		proc.Username, _ = p.Username()
+		procs[int(p.Pid)] = proc
+	}
+	return procs, nil
+}
+func GetCPUUsage() int {
+	percent, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		return 0
+	}
+	return int(math.Round(percent[0]))
 }
 
 //	// Client
