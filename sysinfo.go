@@ -228,7 +228,7 @@ func GetProcs() (map[int]*ProcessInfo, error) {
 	return procs, nil
 }
 func GetCPUUsage() int {
-	percent, err := cpu.Percent(time.Second, false)
+	percent, err := cpu.Percent(time.Millisecond*50, false)
 	if err != nil {
 		return 0
 	}
