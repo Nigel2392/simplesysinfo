@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,12 +54,20 @@ type ProcessInfo struct {
 	Username   string `json:"username,omitempty"`
 }
 
+func (p *ProcessInfo) String() string {
+	return p.Name
+}
+
 // CPUInfo saves the CPU information
 type CPUInfo struct {
 	Threads      int32   `json:"threads,omitempty"`
 	ClockSpeed   float64 `json:"clockspeed,omitempty"`
 	CurrentUsage int     `json:"currentusage,omitempty"`
 	Name         string  `json:"name,omitempty"`
+}
+
+func (c *CPUInfo) String() string {
+	return c.Name
 }
 
 // RAMInfo saves the RAM information
@@ -69,6 +78,14 @@ type RAMInfo struct {
 	Swap  uint64 `json:"swap,omitempty"`
 }
 
+func (r *RAMInfo) GetUsedPercentage() float64 {
+	return float64(r.Used) / float64(r.Total) * 100
+}
+
+func (r *RAMInfo) String() string {
+	return "Total: " + ByteToGB(r.Total) + "Used: " + strconv.FormatFloat(r.GetUsedPercentage(), 'f', 2, 64) + "%"
+}
+
 // DiskInfo saves the Disk information
 type DiskInfo struct {
 	SysID string `json:"sysid,omitempty"`
@@ -76,6 +93,14 @@ type DiskInfo struct {
 	Total uint64 `json:"total,omitempty"`
 	Used  uint64 `json:"used,omitempty"`
 	Free  uint64 `json:"free,omitempty"`
+}
+
+func (d *DiskInfo) GetUsedPercentage() float64 {
+	return float64(d.Used) / float64(d.Total) * 100
+}
+
+func (d *DiskInfo) String() string {
+	return "Total: " + ByteToGB(d.Total) + "Used: " + strconv.FormatFloat(d.GetUsedPercentage(), 'f', 2, 64) + "%"
 }
 
 func GetSysInfo(include []int) *SysInfo {
@@ -132,6 +157,10 @@ func (s *SysInfo) ToJSON() []byte {
 func (s *SysInfo) FromJson(jdata []byte) *SysInfo {
 	json.Unmarshal(jdata, s)
 	return s
+}
+
+func ByteToGB(b uint64) string {
+	return strconv.FormatFloat(float64(b)/1024/1024/1024, 'f', 2, 64) + " GB"
 }
 
 func GetMACAddr() (string, error) {
