@@ -22,7 +22,18 @@ const (
 	INC_DISK
 	INC_MACADDR
 	INC_PROCS
+	last_iota
 )
+
+func GetIncludeAll() []int {
+	var includes []int
+	for i := 0; i < last_iota; i++ {
+		includes = append(includes, i)
+	}
+	return includes
+}
+
+var IncludeAll = GetIncludeAll()
 
 // SysInfo saves the basic system information
 type SysInfo struct {
