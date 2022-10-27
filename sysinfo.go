@@ -225,6 +225,8 @@ func GetProcs() (map[int]*ProcessInfo, error) {
 	}
 	return procs, nil
 }
+
+// Get cpu usage in percentage
 func GetCPUUsage(ms int) float32 {
 	percent, err := cpu.Percent(0, true)
 	if err != nil {
