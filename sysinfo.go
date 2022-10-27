@@ -38,20 +38,20 @@ var IncludeAll = GetIncludeAll()
 
 // SysInfo saves the basic system information
 type SysInfo struct {
-	Hostname string               `json:"hostname,omitempty"`
-	Platform string               `json:"platform,omitempty"`
-	CPU      CPUInfo              `json:"cpu,omitempty"`
-	RAM      RAMInfo              `json:"ram,omitempty"`
-	Disk     DiskInfo             `json:"disk,omitempty"`
-	Procs    map[int]*ProcessInfo `json:"procs,omitempty"`
-	MacAddr  string               `json:"macaddr,omitempty"`
+	Hostname string               `json:"hostname"`
+	Platform string               `json:"platform"`
+	CPU      CPUInfo              `json:"cpu"`
+	RAM      RAMInfo              `json:"ram"`
+	Disk     DiskInfo             `json:"disk"`
+	Procs    map[int]*ProcessInfo `json:"procs"`
+	MacAddr  string               `json:"macaddr"`
 }
 
 type ProcessInfo struct {
-	Pid        int32  `json:"pid,omitempty"`
-	Name       string `json:"name,omitempty"`
-	Executable string `json:"executable,omitempty"`
-	Username   string `json:"username,omitempty"`
+	Pid        int32  `json:"pid"`
+	Name       string `json:"name"`
+	Executable string `json:"executable"`
+	Username   string `json:"username"`
 }
 
 func (p *ProcessInfo) String() string {
@@ -60,10 +60,10 @@ func (p *ProcessInfo) String() string {
 
 // CPUInfo saves the CPU information
 type CPUInfo struct {
-	Threads      int32   `json:"threads,omitempty"`
-	ClockSpeed   float64 `json:"clockspeed,omitempty"`
-	CurrentUsage int     `json:"currentusage,omitempty"`
-	Name         string  `json:"name,omitempty"`
+	Threads      int32   `json:"threads"`
+	ClockSpeed   float64 `json:"clockspeed"`
+	CurrentUsage int     `json:"currentusage"`
+	Name         string  `json:"name"`
 }
 
 func (c *CPUInfo) String() string {
@@ -72,10 +72,10 @@ func (c *CPUInfo) String() string {
 
 // RAMInfo saves the RAM information
 type RAMInfo struct {
-	Total uint64 `json:"total,omitempty"`
-	Used  uint64 `json:"used,omitempty"`
-	Free  uint64 `json:"free,omitempty"`
-	Swap  uint64 `json:"swap,omitempty"`
+	Total uint64 `json:"total"`
+	Used  uint64 `json:"used"`
+	Free  uint64 `json:"free"`
+	Swap  uint64 `json:"swap"`
 }
 
 func (r *RAMInfo) GetUsedPercentage() float64 {
@@ -88,11 +88,11 @@ func (r *RAMInfo) String() string {
 
 // DiskInfo saves the Disk information
 type DiskInfo struct {
-	SysID string `json:"sysid,omitempty"`
-	Path  string `json:"path,omitempty"`
-	Total uint64 `json:"total,omitempty"`
-	Used  uint64 `json:"used,omitempty"`
-	Free  uint64 `json:"free,omitempty"`
+	SysID string `json:"sysid"`
+	Path  string `json:"path"`
+	Total uint64 `json:"total"`
+	Used  uint64 `json:"used"`
+	Free  uint64 `json:"free"`
 }
 
 func (d *DiskInfo) GetUsedPercentage() float64 {
