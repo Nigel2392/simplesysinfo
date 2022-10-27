@@ -2,11 +2,9 @@ package simplesysinfo
 
 import (
 	"encoding/json"
-	"math"
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -62,7 +60,7 @@ func (p *ProcessInfo) String() string {
 type CPUInfo struct {
 	Threads      int32   `json:"threads"`
 	ClockSpeed   float64 `json:"clockspeed"`
-	CurrentUsage int     `json:"currentusage"`
+	CurrentUsage float32 `json:"currentusage"`
 	Name         string  `json:"name"`
 }
 
@@ -227,12 +225,16 @@ func GetProcs() (map[int]*ProcessInfo, error) {
 	}
 	return procs, nil
 }
-func GetCPUUsage(ms int) int {
-	percent, err := cpu.Percent(time.Millisecond*time.Duration(ms), false) // 50ms is the default
+func GetCPUUsage(ms int) float32 {
+	percent, err := cpu.Percent(0, true)
 	if err != nil {
 		return 0
 	}
-	return int(math.Round(percent[0]))
+	total := 0.0
+	for _, p := range percent {
+		total += p
+	}
+	return float32(total / float64(len(percent)))
 }
 
 //	// Client
