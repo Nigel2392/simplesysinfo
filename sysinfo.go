@@ -3,6 +3,7 @@ package simplesysinfo
 import (
 	"encoding/json"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -13,21 +14,24 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
+type includedItem int
+
 const (
-	INC_HOSTNAME = iota
+	INC_HOSTNAME includedItem = iota
 	INC_PLATFORM
 	INC_CPU
 	INC_MEM
 	INC_DISK
 	INC_MACADDR
 	INC_PROCS
+	INC_NETADAPTERS
 	last_iota
 )
 
-func GetIncludeAll() []int {
-	var includes []int
-	for i := 0; i < last_iota; i++ {
-		includes = append(includes, i)
+func GetIncludeAll() []includedItem {
+	var includes []includedItem
+	for i := 0; i < int(last_iota); i++ {
+		includes = append(includes, includedItem(i))
 	}
 	return includes
 }
@@ -36,13 +40,22 @@ var IncludeAll = GetIncludeAll()
 
 // SysInfo saves the basic system information
 type SysInfo struct {
-	Hostname string               `json:"hostname"`
-	Platform string               `json:"platform"`
-	CPU      CPUInfo              `json:"cpu"`
-	RAM      RAMInfo              `json:"ram"`
-	Disk     DiskInfo             `json:"disk"`
-	Procs    map[int]*ProcessInfo `json:"procs"`
-	MacAddr  string               `json:"macaddr"`
+	Hostname    string               `json:"hostname"`
+	Platform    string               `json:"platform"`
+	CPU         CPUInfo              `json:"cpu"`
+	RAM         RAMInfo              `json:"ram"`
+	Disk        DiskInfo             `json:"disk"`
+	Procs       map[int]*ProcessInfo `json:"procs"`
+	MainMacAddr string               `json:"macaddr"`
+	NetAdapters []*NetAdapterInfo    `json:"netadapters"`
+}
+
+type NetAdapterInfo struct {
+	IsUp    bool   `json:"isup"`
+	IsIpv4  bool   `json:"isipv4"`
+	Name    string `json:"name"`
+	IP      string `json:"ip"`
+	MacAddr string `json:"macaddr"`
 }
 
 type ProcessInfo struct {
@@ -101,7 +114,7 @@ func (d *DiskInfo) String() string {
 	return "<Disk> Total: " + ByteToGB(d.Total) + " Used: " + strconv.FormatFloat(d.GetUsedPercentage(), 'f', 2, 64) + "%"
 }
 
-func GetSysInfo(include []int) *SysInfo {
+func GetSysInfo(include ...includedItem) *SysInfo {
 	hostStat, _ := host.Info()
 	info := new(SysInfo)
 	if ContainsInt(include, INC_HOSTNAME) {
@@ -138,11 +151,14 @@ func GetSysInfo(include []int) *SysInfo {
 		}
 	}
 	if ContainsInt(include, INC_MACADDR) {
-		info.MacAddr, _ = GetMACAddr()
+		info.MainMacAddr, _ = GetMACAddr()
 	}
 	if ContainsInt(include, INC_PROCS) {
 		procs, _ := GetProcs()
 		info.Procs = procs
+	}
+	if ContainsInt(include, INC_NETADAPTERS) {
+		info.NetAdapters = GetNetAdapters()
 	}
 	return info
 }
@@ -161,10 +177,12 @@ func ByteToGB(b uint64) string {
 	return strconv.FormatFloat(float64(b)/1024/1024/1024, 'f', 2, 64) + " GB"
 }
 
+const nullAddr = "00:00:00:00:00:00"
+
 func GetMACAddr() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		return "", err
+		return nullAddr, err
 	}
 	var currentIP, currentNetworkHardwareName string
 	for _, address := range addrs {
@@ -190,18 +208,18 @@ func GetMACAddr() (string, error) {
 	}
 	netInterface, err := net.InterfaceByName(currentNetworkHardwareName)
 	if err != nil {
-		return "", err
+		return nullAddr, err
 	}
 	macAddress := netInterface.HardwareAddr
 	// verify if the MAC address can be parsed properly
 	hwAddr, err := net.ParseMAC(macAddress.String())
 	if err != nil {
-		return "", err
+		return nullAddr, err
 	}
 	return hwAddr.String(), nil
 }
 
-func ContainsInt(slice []int, item int) bool {
+func ContainsInt[T comparable](slice []T, item T) bool {
 	for _, s := range slice {
 		if s == item {
 			return true
@@ -237,6 +255,42 @@ func GetCPUUsage(ms int) float32 {
 		total += p
 	}
 	return float32(total / float64(len(percent)))
+}
+
+func GetNetAdapters() []*NetAdapterInfo {
+	interfaces, _ := net.Interfaces()
+	netAdapters := make([]*NetAdapterInfo, 0)
+	for _, interf := range interfaces {
+		if addrs, err := interf.Addrs(); err == nil {
+			for _, addr := range addrs {
+				// Do not include IPV6 addresses
+				var ip, _, err = net.ParseCIDR(addr.String())
+				if err != nil {
+					continue
+				}
+				var isIpv4 bool = true
+				if ip.To4() == nil {
+					isIpv4 = false
+				}
+				var up bool = true
+				if interf.Flags&net.FlagUp == 0 {
+					up = false
+				}
+				netAdapter := &NetAdapterInfo{}
+				netAdapter.Name = interf.Name
+				netAdapter.MacAddr = interf.HardwareAddr.String()
+				netAdapter.IP = addr.String()
+				netAdapter.IsUp = up
+				netAdapter.IsIpv4 = isIpv4
+				netAdapters = append(netAdapters, netAdapter)
+				// }
+			}
+		}
+	}
+	sort.Slice(netAdapters, func(i, j int) bool {
+		return netAdapters[i].Name > netAdapters[j].Name && netAdapters[i].IsIpv4 && !netAdapters[j].IsIpv4
+	})
+	return netAdapters
 }
 
 //	// Client
