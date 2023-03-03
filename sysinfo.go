@@ -43,46 +43,46 @@ type SysInfo struct {
 
 func (s *SysInfo) String() string {
 	var b strings.Builder
-	b.WriteString("Hostname: ")
+	b.WriteString("Hostname:\n\t")
 	b.WriteString(s.Hostname)
-	b.WriteString("\nPlatform: ")
+	b.WriteString("\nPlatform:\n\t")
 	b.WriteString(s.Platform)
+
 	if s.CPU != nil {
-		b.WriteString("\nCPU: ")
-		b.WriteString(s.CPU.Name)
+		b.WriteString("\nCPU:\n")
+		writeToBuf(&b, "Name", s.CPU.Name)
+		writeToBufIfVerbose(&b, "Threads", s.CPU.Threads)
+		writeToBufIfVerbose(&b, "Current Usage", fmt.Sprintf("%.2f", s.CPU.CurrentUsage))
+		writeToBufIfVerbose(&b, "Clock Speed", s.CPU.ClockSpeed)
 	}
 	if s.RAM != nil {
-		b.WriteString("\nRAM: ")
-		writeToBuf(&b, "Percentage Used:", fmt.Sprintf("%.2f%%", s.RAM.GetUsedPercentage()))
-		writeToBufIfVerbose(&b, "Total: %s", ByteToGB(s.RAM.Total))
-		writeToBufIfVerbose(&b, "Used: %s", ByteToGB(s.RAM.Used))
-		writeToBufIfVerbose(&b, "Free: %s", ByteToGB(s.RAM.Free))
-		writeToBufIfVerbose(&b, "Swap: %s", ByteToGB(s.RAM.Swap))
-		b.WriteString("\n")
+		b.WriteString("RAM:\n")
+		writeToBuf(&b, "Percentage Used", fmt.Sprintf("%.2f", s.RAM.GetUsedPercentage()))
+		writeToBufIfVerbose(&b, "Total", ByteToGB(s.RAM.Total))
+		writeToBufIfVerbose(&b, "Used", ByteToGB(s.RAM.Used))
+		writeToBufIfVerbose(&b, "Free", ByteToGB(s.RAM.Free))
+		writeToBufIfVerbose(&b, "Swap", ByteToGB(s.RAM.Swap))
+		if VERBOSE {
+			b.WriteString("\n")
+		}
 	}
 	if s.Disk != nil {
-		b.WriteString("\nDisk: ")
-		writeToBufIfVerbose(&b, "Path:", fmt.Sprintf("\n%s (%s)", s.Disk.Path, s.Disk.SysID))
-		writeToBufIfVerbose(&b, "Used Percentage: %.2f%%", s.Disk.GetUsedPercentage())
-		writeToBufIfVerbose(&b, "Total: %s", ByteToGB(s.Disk.Total))
-		writeToBuf(&b, "Used: %s", ByteToGB(s.Disk.Used))
-		writeToBufIfVerbose(&b, "Free: %s", ByteToGB(s.Disk.Free))
-		b.WriteString("\n")
+		b.WriteString("Disk:\n")
+		writeToBufIfVerbose(&b, "Path", fmt.Sprintf("\n%s (%s)", s.Disk.Path, s.Disk.SysID))
+		writeToBufIfVerbose(&b, "Used Percentage", s.Disk.GetUsedPercentage())
+		writeToBufIfVerbose(&b, "Total", ByteToGB(s.Disk.Total))
+		writeToBuf(&b, "Used", ByteToGB(s.Disk.Used))
+		writeToBufIfVerbose(&b, "Free", ByteToGB(s.Disk.Free))
 	}
 	if s.Procs != nil {
 		if VERBOSE {
-			b.WriteString("\nProcesses: ")
+			b.WriteString("\nProcesses:\n")
 			for _, p := range s.Procs {
 				writeToBuf(&b, fmt.Sprintf("(%d) %s", p.Pid, p.Name), p.Executable)
 			}
 		} else {
 			b.WriteString(fmt.Sprintf("\nProcesses: %d", len(s.Procs)))
 		}
-		b.WriteString("\n")
-	}
-	if s.MainMacAddr != "" {
-		b.WriteString("\nPrimary MAC Address: ")
-		b.WriteString(s.MainMacAddr)
 		b.WriteString("\n")
 	}
 	if s.NetAdapters != nil {
