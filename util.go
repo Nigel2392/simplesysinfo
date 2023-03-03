@@ -14,13 +14,13 @@ func getIncludeAll() []includedItem {
 	return includes
 }
 
-func writeToBufIfVerbose(buf *strings.Builder, name string, value interface{}) {
+func writeToBufIfVerbose(buf *strings.Builder, name string, value interface{}, nullValue ...string) {
 	if VERBOSE {
-		writeToBuf(buf, name, value)
+		writeToBuf(buf, name, value, nullValue...)
 	}
 }
 
-func writeToBuf(buf *strings.Builder, name string, value interface{}) {
+func writeToBuf(buf *strings.Builder, name string, value interface{}, nullValue ...string) {
 	var stringVal string
 	switch v := value.(type) {
 	case string:
@@ -50,7 +50,18 @@ func writeToBuf(buf *strings.Builder, name string, value interface{}) {
 	buf.WriteString("\t")
 	buf.WriteString(name)
 	buf.WriteString(": ")
-	buf.WriteString(stringVal)
+	stringVal = strings.TrimSpace(stringVal)
+	if stringVal == "" || stringVal == "0" || stringVal == "[]" || stringVal == "{}" || stringVal == "()" {
+		if len(nullValue) > 0 {
+			buf.WriteString(nullValue[0])
+		} else {
+			buf.WriteString("No ")
+			buf.WriteString(name)
+			buf.WriteString(" detected")
+		}
+	} else {
+		buf.WriteString(stringVal)
+	}
 	buf.WriteString("\n")
 }
 
