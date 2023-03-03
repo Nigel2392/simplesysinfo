@@ -2,6 +2,7 @@ package simplesysinfo
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/process"
@@ -18,16 +19,36 @@ func (p *ProcessInfo) String() string {
 	return p.Name
 }
 
+type CPU struct {
+	CPU        int32    `json:"cpu"`
+	VendorID   string   `json:"vendorId"`
+	Family     string   `json:"family"`
+	Model      string   `json:"model"`
+	Stepping   int32    `json:"stepping"`
+	PhysicalID string   `json:"physicalId"`
+	CoreID     string   `json:"coreId"`
+	Cores      int32    `json:"cores"`
+	ModelName  string   `json:"modelName"`
+	Mhz        float64  `json:"mhz"`
+	CacheSize  int32    `json:"cacheSize"`
+	Flags      []string `json:"flags"`
+	Microcode  string   `json:"microcode"`
+}
+
 // CPUInfo saves the CPU information
 type CPUInfo struct {
-	Threads      int32   `json:"threads"`
-	ClockSpeed   float64 `json:"clockspeed"`
+	CPUs         []*CPU  `json:"cpus"`
 	CurrentUsage float32 `json:"currentusage"`
-	Name         string  `json:"name"`
 }
 
 func (c *CPUInfo) String() string {
-	return c.Name
+	return strings.Join(func() []string {
+		var s []string
+		for _, cpu := range c.CPUs {
+			s = append(s, cpu.ModelName)
+		}
+		return s
+	}(), ", ")
 }
 
 // RAMInfo saves the RAM information
@@ -63,8 +84,8 @@ func (d *DiskInfo) String() string {
 	return "Disk Total: " + ByteToGB(d.Total) + " Used: " + strconv.FormatFloat(d.GetUsedPercentage(), 'f', 2, 64) + "%"
 }
 
-func GetProcs() (map[int]*ProcessInfo, error) {
-	procs := make(map[int]*ProcessInfo)
+func GetProcs() ([]*ProcessInfo, error) {
+	procs := make([]*ProcessInfo, 0)
 	os_procs, err := process.Processes()
 	if err != nil {
 		return nil, err
@@ -75,7 +96,7 @@ func GetProcs() (map[int]*ProcessInfo, error) {
 		proc.Name, _ = p.Name()
 		proc.Executable, _ = p.Exe()
 		proc.Username, _ = p.Username()
-		procs[int(p.Pid)] = proc
+		procs = append(procs, proc)
 	}
 	return procs, nil
 }

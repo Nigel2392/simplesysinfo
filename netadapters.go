@@ -66,7 +66,7 @@ func GetNetAdapters() []*NetAdapterInfo {
 		}
 	}
 	sort.Slice(netAdapters, func(i, j int) bool {
-		return netAdapters[i].Name > netAdapters[j].Name && netAdapters[i].IsIpv4 && !netAdapters[j].IsIpv4
+		return netAdapters[i].IsUp && !netAdapters[j].IsUp
 	})
 	return netAdapters
 }

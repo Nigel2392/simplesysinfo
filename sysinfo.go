@@ -9,6 +9,7 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
+	"golang.org/x/exp/slices"
 )
 
 type includedItem int
@@ -31,14 +32,14 @@ var VERBOSE = false
 
 // SysInfo saves the basic system information
 type SysInfo struct {
-	Hostname    string               `json:"hostname"`
-	Platform    string               `json:"platform"`
-	CPU         *CPUInfo             `json:"cpu"`
-	RAM         *RAMInfo             `json:"ram"`
-	Disk        *DiskInfo            `json:"disk"`
-	Procs       map[int]*ProcessInfo `json:"procs"`
-	MainMacAddr string               `json:"macaddr"`
-	NetAdapters NetAdapters          `json:"netadapters"`
+	Hostname    string         `json:"hostname"`
+	Platform    string         `json:"platform"`
+	CPU         *CPUInfo       `json:"cpu"`
+	RAM         *RAMInfo       `json:"ram"`
+	Disk        *DiskInfo      `json:"disk"`
+	Procs       []*ProcessInfo `json:"procs"`
+	MainMacAddr string         `json:"macaddr"`
+	NetAdapters NetAdapters    `json:"netadapters"`
 }
 
 func (s *SysInfo) String() string {
@@ -50,10 +51,22 @@ func (s *SysInfo) String() string {
 
 	if s.CPU != nil {
 		b.WriteString("\nCPU:\n")
-		writeToBuf(&b, "Name", s.CPU.Name)
-		writeToBufIfVerbose(&b, "Threads", s.CPU.Threads, "null")
-		writeToBufIfVerbose(&b, "Current Usage", fmt.Sprintf("%.2f", s.CPU.CurrentUsage))
-		writeToBufIfVerbose(&b, "Clock Speed", s.CPU.ClockSpeed, "null")
+		writeToBuf(&b, "Current Usage", s.CPU.CurrentUsage)
+		for _, c := range s.CPU.CPUs {
+			writeToBuf(&b, "ModelName", c.ModelName)
+			writeToBuf(&b, "Cores", c.Cores)
+			writeToBufIfVerbose(&b, "CPU", c.CPU)
+			writeToBufIfVerbose(&b, "VendorID", c.VendorID)
+			writeToBufIfVerbose(&b, "Family", c.Family)
+			writeToBufIfVerbose(&b, "Model", c.Model)
+			writeToBufIfVerbose(&b, "Stepping", c.Stepping)
+			writeToBufIfVerbose(&b, "PhysicalID", c.PhysicalID)
+			writeToBufIfVerbose(&b, "CoreID", c.CoreID)
+			writeToBufIfVerbose(&b, "Mhz", c.Mhz)
+			writeToBufIfVerbose(&b, "CacheSize", c.CacheSize)
+			writeToBufIfVerbose(&b, "Flags", c.Flags)
+			writeToBufIfVerbose(&b, "Microcode", c.Microcode)
+		}
 	}
 	if s.RAM != nil {
 		b.WriteString("RAM:\n")
@@ -121,11 +134,28 @@ func GetSysInfo(include ...includedItem) *SysInfo {
 	if Contains(include, INC_CPU) {
 		cpuStat, _ := cpu.Info()
 		info.CPU = &CPUInfo{
-			Threads:      cpuStat[0].Cores,
-			ClockSpeed:   cpuStat[0].Mhz,
 			CurrentUsage: GetCPUUsage(50),
-			Name:         strings.TrimSpace(cpuStat[0].ModelName),
 		}
+		for _, cpu := range cpuStat {
+			info.CPU.CPUs = append(info.CPU.CPUs, &CPU{
+				CPU:        cpu.CPU,
+				VendorID:   cpu.VendorID,
+				Family:     cpu.Family,
+				Model:      cpu.Model,
+				Stepping:   cpu.Stepping,
+				PhysicalID: cpu.PhysicalID,
+				CoreID:     cpu.CoreID,
+				Cores:      cpu.Cores,
+				ModelName:  cpu.ModelName,
+				Mhz:        cpu.Mhz,
+				CacheSize:  cpu.CacheSize,
+				Flags:      cpu.Flags,
+				Microcode:  cpu.Microcode,
+			})
+		}
+		slices.SortFunc(info.CPU.CPUs, func(i, j *CPU) bool {
+			return i.Cores < j.Cores
+		})
 	}
 	if Contains(include, INC_MEM) {
 		vmStat, _ := mem.VirtualMemory()
@@ -151,6 +181,9 @@ func GetSysInfo(include ...includedItem) *SysInfo {
 	if Contains(include, INC_PROCS) {
 		procs, _ := GetProcs()
 		info.Procs = procs
+		slices.SortFunc(info.Procs, func(i, j *ProcessInfo) bool {
+			return i.Executable > j.Executable
+		})
 	}
 	if Contains(include, INC_NETADAPTERS) {
 		info.NetAdapters = GetNetAdapters()

@@ -2,7 +2,10 @@ module github.com/Nigel2392/simplesysinfo
 
 go 1.19
 
-require github.com/shirou/gopsutil v3.21.11+incompatible
+require (
+	github.com/shirou/gopsutil v3.21.11+incompatible
+	golang.org/x/exp v0.0.0-20230303203934-13299074b82b
+)
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
