@@ -3,6 +3,8 @@ package simplesysinfo
 import (
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/process"
@@ -13,6 +15,7 @@ type ProcessInfo struct {
 	Name       string `json:"name"`
 	Executable string `json:"executable"`
 	Username   string `json:"username"`
+	Memory     *process.MemoryInfoStat
 }
 
 func (p *ProcessInfo) String() string {
@@ -90,20 +93,60 @@ func GetProcs() ([]*ProcessInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	wg.Add(len(os_procs))
 	for _, p := range os_procs {
-		proc := &ProcessInfo{}
-		proc.Pid = p.Pid
-		proc.Name, _ = p.Name()
-		proc.Executable, _ = p.Exe()
-		proc.Username, _ = p.Username()
-		procs = append(procs, proc)
+		go func(p *process.Process) {
+			defer wg.Done()
+			proc := &ProcessInfo{}
+			proc.Pid = p.Pid
+			var nameChan = make(chan string, 1)
+			var exeChan = make(chan string, 1)
+			var usernameChan = make(chan string, 1)
+			var memoryInfoStatChan = make(chan *process.MemoryInfoStat, 1)
+			go func() {
+				name, _ := p.Name()
+				nameChan <- name
+			}()
+			go func() {
+				exe, _ := p.Exe()
+				exeChan <- exe
+			}()
+			go func() {
+				username, _ := p.Username()
+				usernameChan <- username
+			}()
+			go func() {
+				memoryInfoStat, _ := p.MemoryInfo()
+				memoryInfoStatChan <- memoryInfoStat
+			}()
+
+			for i := 0; i < 4; i++ {
+				select {
+				case name := <-nameChan:
+					proc.Name = name
+				case exe := <-exeChan:
+					proc.Executable = exe
+				case username := <-usernameChan:
+					proc.Username = username
+				case memoryInfoStat := <-memoryInfoStatChan:
+					proc.Memory = memoryInfoStat
+				}
+			}
+
+			mu.Lock()
+			procs = append(procs, proc)
+			mu.Unlock()
+		}(p)
 	}
+	wg.Wait()
 	return procs, nil
 }
 
 // Get cpu usage in percentage
 func GetCPUUsage(ms int) float32 {
-	percent, err := cpu.Percent(0, true)
+	percent, err := cpu.Percent(time.Duration(0), true)
 	if err != nil {
 		return 0
 	}
