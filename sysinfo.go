@@ -51,17 +51,17 @@ func (s *SysInfo) String() string {
 	if s.CPU != nil {
 		b.WriteString("\nCPU:\n")
 		writeToBuf(&b, "Name", s.CPU.Name)
-		writeToBufIfVerbose(&b, "Threads", s.CPU.Threads)
+		writeToBufIfVerbose(&b, "Threads", s.CPU.Threads, "null")
 		writeToBufIfVerbose(&b, "Current Usage", fmt.Sprintf("%.2f", s.CPU.CurrentUsage))
-		writeToBufIfVerbose(&b, "Clock Speed", s.CPU.ClockSpeed)
+		writeToBufIfVerbose(&b, "Clock Speed", s.CPU.ClockSpeed, "null")
 	}
 	if s.RAM != nil {
 		b.WriteString("RAM:\n")
 		writeToBuf(&b, "Percentage Used", fmt.Sprintf("%.2f", s.RAM.GetUsedPercentage()))
-		writeToBufIfVerbose(&b, "Total", ByteToGB(s.RAM.Total))
-		writeToBufIfVerbose(&b, "Used", ByteToGB(s.RAM.Used))
-		writeToBufIfVerbose(&b, "Free", ByteToGB(s.RAM.Free))
-		writeToBufIfVerbose(&b, "Swap", ByteToGB(s.RAM.Swap))
+		writeToBufIfVerbose(&b, "Total", ByteToGB(s.RAM.Total), "null")
+		writeToBufIfVerbose(&b, "Used", ByteToGB(s.RAM.Used), "null")
+		writeToBufIfVerbose(&b, "Free", ByteToGB(s.RAM.Free), "null")
+		writeToBufIfVerbose(&b, "Swap", ByteToGB(s.RAM.Swap), "null")
 		if VERBOSE {
 			b.WriteString("\n")
 		}
@@ -76,15 +76,15 @@ func (s *SysInfo) String() string {
 			writeToBuf(&b, "Path", s.Disk.Path)
 		}
 		writeToBufIfVerbose(&b, "Used Percentage", s.Disk.GetUsedPercentage())
-		writeToBufIfVerbose(&b, "Total", ByteToGB(s.Disk.Total))
-		writeToBuf(&b, "Used", ByteToGB(s.Disk.Used))
-		writeToBufIfVerbose(&b, "Free", ByteToGB(s.Disk.Free))
+		writeToBufIfVerbose(&b, "Total", ByteToGB(s.Disk.Total), "null")
+		writeToBuf(&b, "Used", ByteToGB(s.Disk.Used), "null")
+		writeToBufIfVerbose(&b, "Free", ByteToGB(s.Disk.Free), "null")
 	}
 	if s.Procs != nil {
 		if VERBOSE {
 			b.WriteString("\nProcesses:\n")
 			for _, p := range s.Procs {
-				writeToBuf(&b, fmt.Sprintf("(%d) %s", p.Pid, p.Name), p.Executable)
+				writeToBuf(&b, fmt.Sprintf("(%d) %s", p.Pid, p.Name), p.Executable, "")
 			}
 		} else {
 			b.WriteString(fmt.Sprintf("\nProcesses: %d", len(s.Procs)))
@@ -97,8 +97,8 @@ func (s *SysInfo) String() string {
 			writeToBuf(&b, "Name", netAdapter.Name)
 			writeToBuf(&b, "IsUp", netAdapter.IsUp)
 			writeToBuf(&b, "IsIpv4", netAdapter.IsIpv4)
-			writeToBufIfVerbose(&b, "IP", netAdapter.IP)
-			writeToBufIfVerbose(&b, "MacAddr", netAdapter.MacAddr)
+			writeToBufIfVerbose(&b, "IP", netAdapter.IP, "error fetching IP")
+			writeToBufIfVerbose(&b, "MacAddr", netAdapter.MacAddr, "no MAC address found")
 			b.WriteString("\n")
 		}
 		b.WriteString("\n")
