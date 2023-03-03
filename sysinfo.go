@@ -158,12 +158,12 @@ func GetSysInfo(include ...includedItem) *SysInfo {
 	return info
 }
 
-func (s *SysInfo) ToJSON() []byte {
-	json, _ := json.Marshal(s)
+func (s *SysInfo) JSON() []byte {
+	json, _ := json.MarshalIndent(s, "", "  ")
 	return json
 }
 
-func (s *SysInfo) FromJson(jdata []byte) *SysInfo {
+func (s *SysInfo) UnJSON(jdata []byte) *SysInfo {
 	json.Unmarshal(jdata, s)
 	return s
 }
