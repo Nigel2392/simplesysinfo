@@ -146,7 +146,7 @@ func GetProcs() ([]*ProcessInfo, error) {
 
 // Get cpu usage in percentage
 func GetCPUUsage(ms int) float32 {
-	percent, err := cpu.Percent(time.Duration(0), true)
+	percent, err := cpu.Percent(time.Millisecond*time.Duration(ms), true)
 	if err != nil {
 		return 0
 	}
