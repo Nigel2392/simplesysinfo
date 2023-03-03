@@ -68,7 +68,13 @@ func (s *SysInfo) String() string {
 	}
 	if s.Disk != nil {
 		b.WriteString("Disk:\n")
-		writeToBufIfVerbose(&b, "Path", fmt.Sprintf("\n%s (%s)", s.Disk.Path, s.Disk.SysID))
+		if VERBOSE && s.Disk.SysID != "" && s.Disk.Path == "" {
+			writeToBuf(&b, "SysID", s.Disk.SysID)
+		} else if VERBOSE && s.Disk.SysID != "" && s.Disk.Path != "" {
+			writeToBuf(&b, "SysID", fmt.Sprintf("%s (%s)", s.Disk.SysID, s.Disk.Path))
+		} else if VERBOSE && s.Disk.SysID == "" && s.Disk.Path != "" {
+			writeToBuf(&b, "Path", s.Disk.Path)
+		}
 		writeToBufIfVerbose(&b, "Used Percentage", s.Disk.GetUsedPercentage())
 		writeToBufIfVerbose(&b, "Total", ByteToGB(s.Disk.Total))
 		writeToBuf(&b, "Used", ByteToGB(s.Disk.Used))
