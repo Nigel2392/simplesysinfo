@@ -14,13 +14,13 @@ func getIncludeAll() []includedItem {
 	return includes
 }
 
-func writeToBufIfVerbose(buf *strings.Builder, name string, value interface{}, nullValue ...string) {
+func writeToBufIfVerbose(buf *strings.Builder, tabSize int, name string, value interface{}, nullValue ...string) {
 	if VERBOSE {
-		writeToBuf(buf, name, value, nullValue...)
+		writeToBuf(buf, tabSize, name, value, nullValue...)
 	}
 }
 
-func writeToBuf(buf *strings.Builder, name string, value interface{}, nullValue ...string) {
+func writeToBuf(buf *strings.Builder, tabSize int, name string, value interface{}, nullValue ...string) {
 	var stringVal string
 	switch v := value.(type) {
 	case string:
@@ -46,8 +46,9 @@ func writeToBuf(buf *strings.Builder, name string, value interface{}, nullValue 
 	default:
 		stringVal = fmt.Sprintf("%v", v)
 	}
-	buf.Grow(len(name) + len(stringVal) + len("\t: \n"))
-	buf.WriteString("\t")
+	var tabs string = strings.Repeat("\t", tabSize)
+	buf.Grow(len(name) + len(stringVal) + len(tabs+": \n"))
+	buf.WriteString(tabs)
 	buf.WriteString(name)
 	buf.WriteString(": ")
 	stringVal = strings.TrimSpace(stringVal)
