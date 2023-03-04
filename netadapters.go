@@ -98,7 +98,7 @@ func GetNetAdapters() []*NetAdapterInfo {
 							if len(ipPort) < 2 {
 								continue
 							}
-							port.Protocol = ipPort[0]
+							port.Protocol = actualItems[0]
 							port.Port, _ = strconv.Atoi(ipPort[1])
 							port.ExternalIP = actualItems[2]
 							if len(actualItems) > 4 {
