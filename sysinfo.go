@@ -114,6 +114,11 @@ func (s *SysInfo) String() string {
 			writeToBufIfVerbose(&b, 1, "IP", netAdapter.IP, "error fetching IP")
 			writeToBufIfVerbose(&b, 1, "MacAddr", netAdapter.MacAddr, "no MAC address found")
 			if VERBOSE {
+				if len(netAdapter.Ports) == 0 {
+					b.WriteString("\tNo ports found\n")
+				} else {
+					b.WriteString("\tPorts:\n")
+				}
 				for _, port := range netAdapter.Ports {
 					writeToBuf(&b, 2, "Protocol", port.Protocol)
 					writeToBuf(&b, 2, "Port", port.Port)
