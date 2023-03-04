@@ -117,8 +117,9 @@ func (s *SysInfo) String() string {
 				for _, port := range netAdapter.Ports {
 					writeToBuf(&b, 2, "Protocol", port.Protocol)
 					writeToBuf(&b, 2, "Port", port.Port)
-					writeToBuf(&b, 2, "State", port.State)
+					writeToBuf(&b, 2, "State", port.State, "unknown")
 					writeToBuf(&b, 2, "PID", port.PID)
+					b.WriteString("\n")
 				}
 			} else {
 				b.WriteString("Ports:" + strconv.Itoa(len(netAdapter.Ports)))

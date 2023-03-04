@@ -41,10 +41,11 @@ type NetAdapterInfo struct {
 }
 
 type Ports struct {
-	Protocol string `json:"protocol"`
-	Port     int    `json:"port"`
-	State    string `json:"state"` // LISTENING, ESTABLISHED, TIME_WAIT, CLOSE_WAIT, etc
-	PID      int    `json:"pid"`
+	Protocol   string `json:"protocol"`
+	Port       int    `json:"port"`
+	ExternalIP string `json:"external_ip"`
+	State      string `json:"state"` // LISTENING, ESTABLISHED, TIME_WAIT, CLOSE_WAIT, etc
+	PID        int    `json:"pid"`
 }
 
 func GetNetAdapters() []*NetAdapterInfo {
@@ -78,7 +79,7 @@ func GetNetAdapters() []*NetAdapterInfo {
 						log.Fatal(err)
 						goto initAdapter
 					}
-					lines := strings.Split(out.String(), "\n")
+					lines := strings.Split(out.String(), "\r\n")
 					for _, line := range lines {
 						if strings.Contains(line, ip.String()) {
 							var items = strings.Split(line, " ")
@@ -89,18 +90,24 @@ func GetNetAdapters() []*NetAdapterInfo {
 								}
 								actualItems = append(actualItems, item)
 							}
-							var port = &Ports{}
 							if len(actualItems) < 4 {
 								continue
 							}
-							port.Protocol = actualItems[0]
-							port.Port, _ = strconv.Atoi(actualItems[1])
-							if len(actualItems) < 5 {
-								port.PID, _ = strconv.Atoi(actualItems[3])
-							} else {
+							var port = &Ports{}
+							var ipPort = strings.Split(actualItems[1], ":")
+							if len(ipPort) < 2 {
+								continue
+							}
+							port.Protocol = ipPort[0]
+							port.Port, _ = strconv.Atoi(ipPort[1])
+							port.ExternalIP = actualItems[2]
+							if len(actualItems) > 4 {
 								port.State = actualItems[3]
 								port.PID, _ = strconv.Atoi(actualItems[4])
+							} else {
+								port.PID, _ = strconv.Atoi(actualItems[3])
 							}
+
 							ports = append(ports, port)
 						}
 					}
